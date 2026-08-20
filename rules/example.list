@@ -1,4 +1,0 @@
-# 示例分流规则列表
-# 可在 Surge 配置的 [Rule] 段以 RULE-SET=https://raw.githubusercontent.com/nidadadedaye/Personal/main/rules/example.list 引用
-
-DOMAIN-SUFFIX,example.com
