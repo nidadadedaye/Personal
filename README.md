@@ -23,6 +23,8 @@
 | 模块 | 说明 | 状态 |
 | --- | --- | --- |
 | [example.sgmodule](modules/example.sgmodule) | 模块模板，复制后使用 | 模板 |
+| [shenigong-daily.sgmodule](modules/shenigong-daily.sgmodule) | 深i工（深圳工会小程序）每日积分任务，需在模块参数里填自己抓包的 token | 需自行抓包 token |
+| [shenigong-redeem.sgmodule](modules/shenigong-redeem.sgmodule) | 深i工 0 元专区抢兑，定点并发下单，需在模块参数里填 SKU 和抓包凭据 | 需自行抓包 token |
 
 ## 使用方法
 
@@ -53,6 +55,12 @@
 - 图标放在 `icon/`，文件名与模块同名，通过本仓库 raw 链接在 `#!icon` 中引用。
 - 新增模块前先在 `modules/example.sgmodule` 基础上复制修改，保持字段顺序一致，方便对比。
 - 每新增一个模块，在上方「模块列表」表格里补一行。
+- **涉及账号 token / cookie 等私密凭据的模块，绝不硬编码进脚本文件**（仓库是公开的）。用模块头部
+  `#!arguments=key=默认值` 声明参数，脚本行 `argument=key={{{key}}}` 引用，用户在 Surge App「配置模块」
+  界面里填真实值，只留在用户本机，不会进 git。若一个脚本要放多个参数，把值可能含 `&`/`#`/`@` 的那个
+  参数放在 `argument=` 字段**最后**，因为 Surge 只做文本替换不转义，参数值本身不能包含英文逗号
+  （会打断 `.sgmodule` 脚本行自身的字段分隔），具体写法参考 `shenigong-daily.sgmodule` /
+  `shenigong-redeem.sgmodule`。
 
 ## License
 
