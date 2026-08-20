@@ -1,0 +1,21 @@
+#!name = Example Module
+#!desc = 模块模板，复制此文件后重命名并修改内容
+#!category = Utility
+#!author = Personal
+#!homepage = https://github.com/nidadadedaye/Personal
+
+[General]
+
+[Rule]
+
+[URL Rewrite]
+
+[Header Rewrite]
+
+[Map Local]
+
+[Script]
+# http-response example-response-handler = type=http-response,pattern=^https:\/\/example\.com\/api,requires-body=1,max-size=-1,script-path=https://raw.githubusercontent.com/nidadadedaye/Personal/main/scripts/example.js
+
+[MITM]
+hostname = %APPEND% example.com
