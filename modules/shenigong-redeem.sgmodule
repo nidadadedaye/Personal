@@ -1,15 +1,13 @@
 #!name=深i工 0元专区抢兑
-#!desc=深圳工会「深i工」小程序 0 元专区抢兑：拉取当期商品、按 SKU 匹配、临近开抢时间点并发下单直到成功/排队/失败。由 shenigong_redeem.py 移植而来，逆向出的签名算法已在脚本内公开。安装后正常打开一次深i工小程序（进入过商城页面）即可自动抓取登录凭据，只需要额外补一个手机号参数。
+#!desc=深圳工会「深i工」小程序 0 元专区抢兑：拉取当期商品、按 SKU 匹配、临近开抢时间点并发下单直到成功/排队/失败。由 shenigong_redeem.py 移植而来，逆向出的签名算法已在脚本内公开。安装后正常打开一次深i工小程序（进入过商城页面）即可自动抓取登录凭据。手机号/目标 SKU/额外账号配合 BoxJs 填写，订阅本仓库根目录的 boxjs.json。
 #!category=Utility
 #!author=Personal
 #!homepage=https://github.com/nidadadedaye/Personal
-#!arguments=szgh_phone=&szgh_target=&szgh_redeem=
-#!arguments-desc=szgh_phone（自动抓取的主账号需要填）：主账号手机号，纯数字 11 位，仅虚拟商品（话费/流量等直充到手机号的商品）需要，抓包抢不到 phone 所以要手填。 | szgh_target（必填，可先留空跑一次看日志再回填）：要抢兑的商品 SKU，纯数字，来源为脚本运行日志里打印的商品清单（caseId/skuId）。 | szgh_redeem（选填，用于追加"自动抓取"以外的账号）：JSESSIONID#csrf-token#手机号@备注，多账号用 & 或换行分隔，备注不要含英文逗号。主账号不用填这个——脚本会自动从流量里抓 JSESSIONID 和 csrf-token。
 
 [Script]
 # cronexp 需要按你要抢的商品实际开抢时间改成"提前一分钟左右"，例如某天 10:00 开抢就配 "55 9 * * *"；
 # 脚本内部会用 setTimeout 精确等到毫秒级开抢点再下单，提前触发只是为了留出预热和网络延迟余量。
-shenigong-redeem-cron = type=cron,cronexp="55 9 * * *",timeout=320,script-path=https://raw.githubusercontent.com/nidadadedaye/Personal/main/scripts/shenigong_redeem.js,argument=szgh_phone={{{szgh_phone}}}&szgh_target={{{szgh_target}}}&szgh_redeem={{{szgh_redeem}}}
+shenigong-redeem-cron = type=cron,cronexp="55 9 * * *",timeout=320,script-path=https://raw.githubusercontent.com/nidadadedaye/Personal/main/scripts/shenigong_redeem.js
 shenigong-redeem-capture = type=http-request,pattern=^https:\/\/miniapp-gig\.szzgh\.org\/benefits\/web-plat\/,requires-body=false,script-path=https://raw.githubusercontent.com/nidadadedaye/Personal/main/scripts/shenigong_redeem.js
 
 [MITM]

@@ -10,10 +10,11 @@
 
 ```
 .
-├── modules/   # .sgmodule 模块文件，每个功能一个文件
-├── scripts/   # 模块引用的 JS 脚本（http-request / http-response 等）
-├── rules/     # 独立维护的分流规则列表（.list），供模块或配置引用
-└── icon/      # 模块 #!icon 字段引用的图标资源
+├── modules/    # .sgmodule 模块文件，每个功能一个文件
+├── scripts/    # 模块引用的 JS 脚本（http-request / http-response / cron 等）
+├── rules/      # 独立维护的分流规则列表（.list），供模块或配置引用
+├── icon/       # 模块 #!icon 字段引用的图标资源
+└── boxjs.json  # 配合 BoxJs 编辑各模块"自动抓不到"的字段（见下方使用方法）
 ```
 
 模块数量较多时，可参考 [blackmatrix7/ios_rule_script](https://github.com/blackmatrix7/ios_rule_script) 的做法，在 `modules/` 下按功能再分子目录（如 `modules/Advertising/`、`modules/Media/`），当前规模保持扁平即可。
@@ -22,8 +23,8 @@
 
 | 模块 | 说明 | 状态 |
 | --- | --- | --- |
-| [shenigong-daily.sgmodule](modules/shenigong-daily.sgmodule) | 深i工（深圳工会小程序）每日积分任务，打开一次小程序自动抓 token | 自动抓凭据 |
-| [shenigong-redeem.sgmodule](modules/shenigong-redeem.sgmodule) | 深i工 0 元专区抢兑，定点并发下单，登录凭据自动抓，需手填手机号/SKU | 自动抓凭据 |
+| [shenigong-daily.sgmodule](modules/shenigong-daily.sgmodule) | 深i工（深圳工会小程序）每日积分任务，打开一次小程序自动抓 token | 自动抓凭据 + BoxJs 补充 |
+| [shenigong-redeem.sgmodule](modules/shenigong-redeem.sgmodule) | 深i工 0 元专区抢兑，定点并发下单，登录凭据自动抓，手机号/SKU 走 BoxJs | 自动抓凭据 + BoxJs 补充 |
 
 ## 使用方法
 
@@ -33,23 +34,30 @@
    https://raw.githubusercontent.com/nidadadedaye/Personal/main/modules/shenigong-daily.sgmodule
    ```
 
-2. 添加后点开该模块条目进入"配置模块"界面，会看到模块头部 `#!arguments` 声明的参数输入框，按模块自带的
-   `#!arguments-desc` 说明填写真实值（比如 `szgh_token`）。这些值只保存在你本机的 Surge 配置里，**不会**
-   上传到本仓库。
-3. 保存并启用模块。`[Script]` 里配置的是 `type=cron` 定时任务，会按 `cronexp` 定的时间自动触发；也可以在
-   Surge 的「脚本」日志面板里找到对应脚本手动点一次，立即测试、看输出。
+2. 保存并启用模块。`[Script]` 里是一个 `type=cron`（跑正式任务）加一个挂在 `[MITM]` 拦截域名上的
+   `type=http-request`（负责自动抓取登录凭据），两个条目复用同一个脚本文件。也可以在 Surge 的「脚本」
+   日志面板里找到对应脚本手动点一次，立即测试、看输出。
+3. 自动抓不到的少数字段（手机号、会员卡号、额外账号）配合 [BoxJs](https://docs.boxjs.app/) 填写：在
+   BoxJs 里订阅本仓库的设置描述文件：
 
-两个 shenigong 模块的具体填参步骤（token/登录凭据都是自动抓取的，不需要手动抓包）：
+   ```
+   https://raw.githubusercontent.com/nidadadedaye/Personal/main/boxjs.json
+   ```
+
+   订阅后 BoxJs 面板会出现「深i工 每日任务」「深i工 0元专区抢兑」两组表单，填的值直接写进 Surge 的
+   `$persistentStore`，脚本下次运行就能读到；同样只存在你本机，不会进本仓库。
+
+两个 shenigong 模块的具体使用步骤：
 
 - **shenigong-daily**（每日任务）：启用模块后正常打开一次深i工小程序（发出任意请求即可，不需要真的做任务），
-  脚本会自动从流量里抓 token 并存起来，之后每天 `cronexp`（默认 08:17）自动跑，token 过期了再打开一次
-  小程序会自动刷新。阵地打卡需要额外填 `szgh_card`（会员卡号）；`szgh_token` 参数留空即可，只有想加自动
-  抓不到的其他账号（比如家人的）时才需要手动填。
-- **shenigong-redeem**（抢兑）：启用模块后正常打开一次深i工小程序并进入过商城页面，脚本会自动抓
-  JSESSIONID / csrf-token；抓不到的手机号需要在 `szgh_phone` 里填一次（仅虚拟商品下单要用）。`szgh_target`
-  先留空，在脚本面板手动跑一次，从日志打印的商品清单里拿到目标 SKU 填回去；再把模块里的 `cronexp` 改成
-  实际开抢时间前一分钟左右（比如 10:00 开抢改成 `"55 9 * * *"`），保存启用即可。`szgh_redeem` 参数同样只在
-  要追加抓不到的其他账号时才需要手动填。
+  脚本自动抓 token 并存起来，之后每天 `cronexp`（默认 08:17）自动跑，token 过期了再打开一次小程序会自动
+  刷新。阵地打卡需要在 BoxJs 里填 `szgh_card`（会员卡号）；`szgh_token_extra` 只有想加自动抓不到的其他
+  账号（比如家人的）时才需要填。
+- **shenigong-redeem**（抢兑）：启用模块后正常打开一次深i工小程序并进入过商城页面，脚本自动抓
+  JSESSIONID / csrf-token；在 BoxJs 里填 `szgh_phone`（仅虚拟商品下单要用）。`szgh_target` 先留空，在脚本
+  面板手动跑一次，从日志打印的商品清单里拿到目标 SKU，回填到 BoxJs 里；再把模块里的 `cronexp` 改成实际
+  开抢时间前一分钟左右（比如 10:00 开抢改成 `"55 9 * * *"`），保存启用即可。`szgh_redeem_extra` 同样只在
+  要追加抓不到的其他账号时才需要填。
 
 两个模块都用 `[MITM]` + `type=http-request` 做自动抓取，前提是 Surge 已经安装好 MITM 证书并整体启用了 MITM
 功能（Surge 首次配置时的标准步骤，不是这两个模块特有的）。
@@ -78,11 +86,12 @@
   自动抓取凭据、写入 `$persistentStore`**（同一个脚本文件被 `type=cron` 和 `type=http-request` 两个
   `[Script]` 条目复用，靠 `typeof $request !== "undefined"` 判断走抓取逻辑还是主流程，参考
   `shenigong-daily.sgmodule` / `scripts/shenigong_daily.js`）——这样用户装完模块正常用一次对应 App 就自动
-  配好了，不用手动抓包。抓不到的字段（如收货手机号）或抓不到的额外账号，才用 `#!arguments=key=默认值`
-  声明参数、脚本行 `argument=key={{{key}}}` 引用，在 Surge App「配置模块」界面里手填，只留在用户本机，
-  不会进 git。若一个脚本要放多个参数，把值可能含 `&`/`#`/`@` 的那个参数放在 `argument=` 字段**最后**，
-  因为 Surge 只做文本替换不转义，参数值本身不能包含英文逗号（会打断 `.sgmodule` 脚本行自身的字段分隔），
-  具体写法参考 `shenigong-daily.sgmodule` / `shenigong-redeem.sgmodule`。
+  配好了，不用手动抓包。抓不到的字段（如收货手机号）或抓不到的额外账号，配合 [BoxJs](https://docs.boxjs.app/)
+  提供填写表单：把对应的 `$persistentStore` key 加进仓库根目录 `boxjs.json` 的 `apps[].settings[]`
+  （`id` 就是 key 名），脚本直接 `$persistentStore.read(key)` 读取。不用 Surge 自带的 `#!arguments`——
+  那套机制是纯文本替换、不转义，多个参数拼在一个 `argument=` 字段里还要小心 `&`/`#`/`@`/英文逗号跟
+  `.sgmodule` 自身语法冲突，BoxJs 的每个字段是独立的 key，没有这个问题。具体写法参考
+  `boxjs.json` / `shenigong-daily.sgmodule` / `scripts/shenigong_daily.js`。
 
 ## License
 

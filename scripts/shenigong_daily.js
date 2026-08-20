@@ -574,20 +574,7 @@ async function runAccount(token, tag, cfg) {
   return out.join("\n");
 }
 
-// ---------- 参数解析：$argument = "szgh_card=<...>&szgh_token=<...>"（szgh_token 放最后，值本身可含 & # @）----------
-
-function readArguments(raw) {
-  raw = raw || "";
-  const marker = "&szgh_token=";
-  const idx = raw.indexOf(marker);
-  let cardPart = raw, tokenPart = "";
-  if (idx !== -1) {
-    cardPart = raw.slice(0, idx);
-    tokenPart = raw.slice(idx + marker.length);
-  }
-  const cardMatch = /^szgh_card=([\s\S]*)$/.exec(cardPart);
-  return { cardRaw: cardMatch ? cardMatch[1] : "", tokenRaw: tokenPart };
-}
+// ---------- 手动配置：配合 BoxJs 直接读写 $persistentStore，见仓库根目录 boxjs.json ----------
 
 function parseAccounts(raw) {
   const accounts = [];
@@ -647,25 +634,26 @@ function captureToken() {
   $done({});
 }
 
-// 自动抓取的账号 + 模块参数里手动追加的账号（用于抓不到的其他家庭成员账号），按 token 去重。
-function buildAccounts(tokenRaw) {
+// 自动抓取的账号 + BoxJs 里手动追加的账号（用于抓不到的其他家庭成员账号），按 token 去重。
+function buildAccounts() {
   const accounts = [];
   const captured = $persistentStore.read(CAPTURED_TOKEN_KEY);
   if (captured) accounts.push([captured, "本机自动抓取"]);
-  for (const acc of parseAccounts(tokenRaw)) {
+  const extraRaw = $persistentStore.read("szgh_token_extra") || "";
+  for (const acc of parseAccounts(extraRaw)) {
     if (!accounts.some((a) => a[0] === acc[0])) accounts.push(acc);
   }
   return accounts;
 }
 
 async function runMain() {
-  const { cardRaw, tokenRaw } = readArguments(typeof $argument === "string" ? $argument : "");
-  const accounts = buildAccounts(tokenRaw);
+  const accounts = buildAccounts();
   if (!accounts.length) {
-    console.log("未捕获到 token，也未配置模块参数 szgh_token：请先正常打开一次深i工小程序，或在模块参数里手动填 token");
+    console.log("未捕获到 token，也未在 BoxJs 里配置 szgh_token_extra：请先正常打开一次深i工小程序，或在 BoxJs 里手动填账号");
     $done();
     return;
   }
+  const cardRaw = $persistentStore.read("szgh_card") || "";
   const cfg = { cards: parseCards(cardRaw), city: "深圳市", seeds: CHECKIN_SEEDS, do_checkin: true, do_quiz: true };
   console.log(`共 ${accounts.length} 个账号`);
   const reports = [];

@@ -1,0 +1,68 @@
+{
+  "id": "personal.shenigong",
+  "name": "深i工 脚本设置",
+  "author": "@nidadadedaye",
+  "repo": "https://github.com/nidadadedaye/Personal",
+  "apps": [
+    {
+      "id": "szgh_daily",
+      "name": "深i工 每日任务",
+      "keys": ["szgh_card", "szgh_token_extra"],
+      "settings": [
+        {
+          "id": "szgh_card",
+          "name": "阵地打卡会员卡号",
+          "val": "",
+          "type": "textarea",
+          "autoGrow": true,
+          "rows": 2,
+          "desc": "格式：备注:卡号，多个用 & 分隔；备注需与账号备注一致（自动抓取的账号备注固定为「本机自动抓取」）",
+          "placeholder": "本机自动抓取:1234567890"
+        },
+        {
+          "id": "szgh_token_extra",
+          "name": "额外账号 token（自动抓不到的家人账号）",
+          "val": "",
+          "type": "textarea",
+          "autoGrow": true,
+          "rows": 3,
+          "desc": "格式：token@备注，多个用 & 或换行分隔；本机主账号不用填，脚本会自动抓取",
+          "placeholder": "abcdef0123456789@老婆"
+        }
+      ]
+    },
+    {
+      "id": "szgh_redeem",
+      "name": "深i工 0元专区抢兑",
+      "keys": ["szgh_phone", "szgh_target", "szgh_redeem_extra"],
+      "settings": [
+        {
+          "id": "szgh_phone",
+          "name": "主账号手机号",
+          "val": "",
+          "type": "text",
+          "desc": "11 位数字，仅虚拟商品（话费/流量直充）下单需要，自动抓取抓不到手机号",
+          "placeholder": "13800138000"
+        },
+        {
+          "id": "szgh_target",
+          "name": "目标商品 SKU",
+          "val": "",
+          "type": "text",
+          "desc": "纯数字，先留空跑一次看脚本日志里的商品清单再回填",
+          "placeholder": "1366073650545438720"
+        },
+        {
+          "id": "szgh_redeem_extra",
+          "name": "额外账号（自动抓不到的家人账号）",
+          "val": "",
+          "type": "textarea",
+          "autoGrow": true,
+          "rows": 3,
+          "desc": "格式：JSESSIONID#csrf-token#手机号@备注，多个用 & 或换行分隔；本机主账号不用填",
+          "placeholder": "JSESSIONIDxxx#csrfxxx#13900139000@老婆"
+        }
+      ]
+    }
+  ]
+}
