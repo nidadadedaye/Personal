@@ -625,13 +625,44 @@ function parseCards(raw) {
   return cards;
 }
 
-// ---------- 入口 ----------
+// ---------- 凭证自动抓取：type=http-request 命中 lsapp.szzgh.org 的请求时触发 ----------
+// 正常打开一次深i工小程序（发出任意 API 请求）即可自动抓到 token 并持久化，token 过期后
+// 下次打开小程序也会自动刷新，不需要手动抓包/填参数。
 
-(async () => {
+const CAPTURED_TOKEN_KEY = "szgh_token_captured";
+
+function lowerCaseHeaders(headers) {
+  const out = {};
+  for (const k of Object.keys(headers || {})) out[k.toLowerCase()] = headers[k];
+  return out;
+}
+
+function captureToken() {
+  const headers = lowerCaseHeaders($request.headers);
+  const token = headers["token"];
+  if (token && token !== $persistentStore.read(CAPTURED_TOKEN_KEY)) {
+    $persistentStore.write(token, CAPTURED_TOKEN_KEY);
+    console.log("[深i工每日任务] 已自动抓取/更新 token");
+  }
+  $done({});
+}
+
+// 自动抓取的账号 + 模块参数里手动追加的账号（用于抓不到的其他家庭成员账号），按 token 去重。
+function buildAccounts(tokenRaw) {
+  const accounts = [];
+  const captured = $persistentStore.read(CAPTURED_TOKEN_KEY);
+  if (captured) accounts.push([captured, "本机自动抓取"]);
+  for (const acc of parseAccounts(tokenRaw)) {
+    if (!accounts.some((a) => a[0] === acc[0])) accounts.push(acc);
+  }
+  return accounts;
+}
+
+async function runMain() {
   const { cardRaw, tokenRaw } = readArguments(typeof $argument === "string" ? $argument : "");
-  const accounts = parseAccounts(tokenRaw);
+  const accounts = buildAccounts(tokenRaw);
   if (!accounts.length) {
-    console.log("未配置模块参数 szgh_token");
+    console.log("未捕获到 token，也未配置模块参数 szgh_token：请先正常打开一次深i工小程序，或在模块参数里手动填 token");
     $done();
     return;
   }
@@ -646,7 +677,18 @@ function parseCards(raw) {
   }
   $notification.post("深i工每日任务", "", reports.join("\n\n"));
   $done();
+}
+
+// ---------- 入口：同一个脚本被两个 [Script] 条目复用 ----------
+// http-request 触发（$request 存在）时只做凭证抓取；cron 触发时跑每日任务主流程。
+
+(async () => {
+  if (typeof $request !== "undefined") {
+    captureToken();
+  } else {
+    await runMain();
+  }
 })().catch((e) => {
-  console.log("每日任务脚本异常：" + ((e && e.stack) || e));
+  console.log("深i工每日任务脚本异常：" + ((e && e.stack) || e));
   $done();
 });

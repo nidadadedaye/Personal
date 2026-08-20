@@ -357,6 +357,10 @@ async function runAccountRedeem(index, account, goods, log) {
   const shipmentType = String(detail.virtualShipment || "");
   let payload, shipmentDesc;
   if (shipmentType === "1") {
+    if (!account.phone) {
+      log(`[${index}][${tag}] 虚拟商品需要手机号，请在模块参数 szgh_phone 填手机号（自动抓取的凭据抓不到手机号）`);
+      return "failed";
+    }
     payload = { goodsSnappedId: gid, virtualShipmentPhone: account.phone, orderRemark: "" };
     shipmentDesc = "虚拟商品/手机号";
   } else {
@@ -450,24 +454,71 @@ function parseRedeemAccounts(raw) {
 
 function parseArguments(raw) {
   raw = raw || "";
-  const marker = "&szgh_redeem=";
-  const idx = raw.indexOf(marker);
-  let targetPart = raw, redeemPart = "";
-  if (idx !== -1) {
-    targetPart = raw.slice(0, idx);
-    redeemPart = raw.slice(idx + marker.length);
-  }
-  const targetMatch = /^szgh_target=([\s\S]*)$/.exec(targetPart);
-  const target = targetMatch ? targetMatch[1].trim() : "";
-  return { target, accounts: parseRedeemAccounts(redeemPart) };
+  const targetMarker = "&szgh_target=";
+  const redeemMarker = "&szgh_redeem=";
+  const tIdx = raw.indexOf(targetMarker);
+  const phonePart = tIdx === -1 ? raw : raw.slice(0, tIdx);
+  const rest = tIdx === -1 ? "" : raw.slice(tIdx + targetMarker.length);
+  const rIdx = rest.indexOf(redeemMarker);
+  // rest 已经在 targetMarker 处切掉了 "szgh_target=" 前缀，target/redeemRaw 拿到的就是值本身，不用再剥前缀。
+  const target = (rIdx === -1 ? rest : rest.slice(0, rIdx)).trim();
+  const redeemRaw = rIdx === -1 ? "" : rest.slice(rIdx + redeemMarker.length);
+  const phoneMatch = /^szgh_phone=([\s\S]*)$/.exec(phonePart);
+  const phone = phoneMatch ? phoneMatch[1].trim() : "";
+  return { phone, target, manualAccounts: parseRedeemAccounts(redeemRaw) };
 }
 
-// ---------- 入口 ----------
+// ---------- 凭证自动抓取：type=http-request 命中 miniapp-gig.szzgh.org 的请求时触发 ----------
+// 正常打开一次深i工小程序进入过商城页面（发出任意 web-plat 请求）即可自动抓到 JSESSIONID/csrf-token
+// 并持久化；手机号抓不到，需要在模块参数 szgh_phone 里填一次（仅虚拟商品下单要用）。
 
-async function main() {
-  const { target, accounts } = parseArguments(typeof $argument === "string" ? $argument : "");
+const CAPTURED_SESSION_KEY = "szgh_redeem_session";
+const CAPTURED_CSRF_KEY = "szgh_redeem_csrf";
+
+function lowerCaseHeaders(headers) {
+  const out = {};
+  for (const k of Object.keys(headers || {})) out[k.toLowerCase()] = headers[k];
+  return out;
+}
+
+function captureCredentials() {
+  const headers = lowerCaseHeaders($request.headers);
+  const cookie = headers["cookie"] || "";
+  const m = /JSESSIONID=([^;]+)/.exec(cookie);
+  const csrf = headers["csrf-token"];
+  let changed = false;
+  if (m && m[1] !== $persistentStore.read(CAPTURED_SESSION_KEY)) {
+    $persistentStore.write(m[1], CAPTURED_SESSION_KEY);
+    changed = true;
+  }
+  if (csrf && csrf !== $persistentStore.read(CAPTURED_CSRF_KEY)) {
+    $persistentStore.write(csrf, CAPTURED_CSRF_KEY);
+    changed = true;
+  }
+  if (changed) console.log("[深i工抢兑] 已自动抓取/更新登录凭据");
+  $done({});
+}
+
+// 自动抓取的主账号（session/csrf 来自流量抓取，phone 来自模块参数）+ 模块参数里手动追加的账号。
+function buildAccounts(phone, manualAccounts) {
+  const accounts = [];
+  const session = $persistentStore.read(CAPTURED_SESSION_KEY);
+  const csrf = $persistentStore.read(CAPTURED_CSRF_KEY);
+  if (session && csrf) accounts.push({ session, csrf, phone, remark: "本机自动抓取" });
+  for (const acc of manualAccounts) {
+    if (!accounts.some((a) => a.session === acc.session)) accounts.push(acc);
+  }
+  return accounts;
+}
+
+// ---------- 入口：同一个脚本被两个 [Script] 条目复用 ----------
+// http-request 触发（$request 存在）时只做凭证抓取；cron 触发时跑抢兑主流程。
+
+async function runMain() {
+  const { phone, target, manualAccounts } = parseArguments(typeof $argument === "string" ? $argument : "");
+  const accounts = buildAccounts(phone, manualAccounts);
   if (!accounts.length) {
-    console.log("未配置模块参数 szgh_redeem");
+    console.log("未捕获到登录凭据，也未配置模块参数 szgh_redeem：请先正常打开一次深i工小程序并进入商城页面");
     $done();
     return;
   }
@@ -509,7 +560,13 @@ async function main() {
   $done();
 }
 
-main().catch((e) => {
-  console.log("抢兑脚本异常：" + ((e && e.stack) || e));
+(async () => {
+  if (typeof $request !== "undefined") {
+    captureCredentials();
+  } else {
+    await runMain();
+  }
+})().catch((e) => {
+  console.log("深i工抢兑脚本异常：" + ((e && e.stack) || e));
   $done();
 });
