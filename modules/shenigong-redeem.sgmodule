@@ -7,7 +7,7 @@
 # 脚本内部会用 setTimeout 精确等到毫秒级开抢点再下单，提前触发只是为了留出预热和网络延迟余量。
 
 [Script]
-shenigong-redeem-cron = type=cron,cronexp="55 9 * * *",timeout=320,wake-system=1,script-path=https://raw.githubusercontent.com/nidadadedaye/Personal/main/scripts/shenigong_redeem.js
+shenigong-redeem-cron = type=cron,cronexp="55 9 * * *",timeout=400,wake-system=1,script-path=https://raw.githubusercontent.com/nidadadedaye/Personal/main/scripts/shenigong_redeem.js
 shenigong-redeem-capture = type=http-request,pattern=^https?:\/\/miniapp-gig\.szzgh\.org\/,requires-body=false,debug=true,script-path=https://raw.githubusercontent.com/nidadadedaye/Personal/main/scripts/shenigong_redeem.js
 
 [MITM]
