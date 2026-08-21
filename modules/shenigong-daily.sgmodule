@@ -9,4 +9,4 @@ shenigong-daily-cron = type=cron,cronexp="17 8 * * *",timeout=180,wake-system=1,
 shenigong-daily-capture = type=http-request,pattern=^https?:\/\/lsapp\.szzgh\.org(:\d+)?\/,requires-body=false,debug=true,script-path=https://raw.githubusercontent.com/nidadadedaye/Personal/main/scripts/shenigong_daily.js
 
 [MITM]
-hostname = %APPEND% lsapp.szzgh.org
+hostname = %APPEND% lsapp.szzgh.org:99
