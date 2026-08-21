@@ -470,6 +470,7 @@ function captureCredentials() {
   const cookie = headers["cookie"] || "";
   const m = /JSESSIONID=([^;]+)/.exec(cookie);
   const csrf = headers["csrf-token"];
+  console.log(`[深i工抢兑] 命中抓取规则：${$request.url}，JSESSIONID${m ? "存在" : "不存在"}，csrf-token${csrf ? "存在" : "不存在"}`);
   let changed = false;
   if (m && m[1] !== $persistentStore.read(CAPTURED_SESSION_KEY)) {
     $persistentStore.write(m[1], CAPTURED_SESSION_KEY);
