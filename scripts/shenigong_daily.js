@@ -627,10 +627,9 @@ function lowerCaseHeaders(headers) {
 function captureToken() {
   const headers = lowerCaseHeaders($request.headers);
   const token = headers["token"];
-  console.log(`[深i工每日任务] 命中抓取规则：${$request.url}，token 头${token ? "存在" : "不存在"}`);
   if (token && token !== $persistentStore.read(CAPTURED_TOKEN_KEY)) {
     $persistentStore.write(token, CAPTURED_TOKEN_KEY);
-    console.log("[深i工每日任务] 已自动抓取/更新 token");
+    $notification.post("深i工每日任务", "已自动抓取 token", "打开小程序时自动捕获，稍后可手动跑一次每日任务验证");
   }
   $done({});
 }
