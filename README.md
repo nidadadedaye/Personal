@@ -20,8 +20,8 @@
 ├── modules/    # .sgmodule 模块文件，每个功能一个文件
 ├── scripts/    # 模块引用的 JS 脚本
 ├── icon/       # 模块 #!icon 字段引用的图标资源
-├── boxjs.json  # 配合 BoxJs 编辑各模块"自动抓不到"的字段
-└── docs/       # 使用方法、新增模块的约定
+├── boxjs.json  # BoxJs 配置描述文件
+└── docs/       # 说明文档
 ```
 
 ## 使用方法
