@@ -1,18 +1,6 @@
 /**
- * 深i工（深圳工会小程序）0 元专区抢兑 —— 由 shenigong_redeem.py 移植。
- *
- * 配置：在 Surge 模块的「配置」界面填写参数（对应 shenigong-redeem.sgmodule 的 #!arguments）：
- *   szgh_target（必填）：要抢兑的商品 SKU，纯数字。留空时脚本只打印当期商品清单，不会下单，
- *                        可以先跑一次看日志拿到 SKU 再回填。
- *   szgh_redeem（必填）：JSESSIONID#csrf-token#手机号@备注，来源为商城 miniapp-gig.szzgh.org
- *                        请求头（不是 lsapp token）。多账号用 & 或换行分隔，备注不要含英文逗号。
- *
- * 与原 Python 脚本的差异：Surge 脚本引擎是单线程事件循环，没有真正的线程池；这里用多个互不
- * await 对方的 setTimeout 重试循环模拟原来 ThreadPoolExecutor 的"多 worker 并发发请求"效果——
- * 网络 I/O 本身是异步的，多个请求仍然可以同时在途，效果等价。
- *
- * cronexp 需要你按实际开抢时间改成"提前一分钟左右"（脚本内部会用 setTimeout 精确等到毫秒级
- * 开抢点，提前触发只是为了留出预热/网络延迟余量），例如 10:00 开抢配 "55 9 * * *"。
+ * 深i工（深圳工会小程序）0 元专区抢兑。登录凭据自动抓取，配置见 boxjs.json。
+ * 抢单用多个互不 await 对方的重试循环模拟并发（Surge 脚本引擎单线程，没有真线程池）。
  */
 
 const BASE = "https://miniapp-gig.szzgh.org/benefits/web-plat";
@@ -339,7 +327,7 @@ async function runAccountRedeem(index, account, goods, log) {
   const pointsResp = await getJson(account, "/snapped/getPoints?deptId=" + DEPT_ID);
   if (pointsResp.code !== 200) {
     log(`[${index}][${tag}] 商城登录失效：${pointsResp.msg || pointsResp.message}`);
-    return "failed";
+    return "login_invalid";
   }
   const gid = String(goods.id || "");
   const name = String(goods.goodsName || gid);
@@ -410,7 +398,7 @@ async function runAccountRedeem(index, account, goods, log) {
   return state.state;
 }
 
-// ---------- 参数解析：$argument = "szgh_target=<...>&szgh_redeem=<...>"（szgh_redeem 放最后）----------
+// ---------- 参数解析（BoxJs 里 szgh_redeem_extra 的格式） ----------
 
 function rsplit(str, sep, maxSplits) {
   const parts = [];
@@ -452,12 +440,10 @@ function parseRedeemAccounts(raw) {
   return accounts;
 }
 
-// ---------- 凭证自动抓取：type=http-request 命中 miniapp-gig.szzgh.org 的请求时触发 ----------
-// 正常打开一次深i工小程序进入过商城页面（发出任意 web-plat 请求）即可自动抓到 JSESSIONID/csrf-token
-// 并持久化；手机号抓不到，配合 BoxJs 在 szgh_phone 里填一次（仅虚拟商品下单要用）。
+// ---------- 凭证自动抓取 ----------
 
-const CAPTURED_SESSION_KEY = "szgh_redeem_session";
-const CAPTURED_CSRF_KEY = "szgh_redeem_csrf";
+const CAPTURED_SESSIONS_KEY = "szgh_redeem_sessions";
+const MAX_CAPTURED_SESSIONS = 3;
 
 function lowerCaseHeaders(headers) {
   const out = {};
@@ -465,33 +451,58 @@ function lowerCaseHeaders(headers) {
   return out;
 }
 
+function readCapturedSessions() {
+  try {
+    const list = JSON.parse($persistentStore.read(CAPTURED_SESSIONS_KEY) || "[]");
+    return Array.isArray(list) ? list : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function writeCapturedSessions(list) {
+  $persistentStore.write(JSON.stringify(list), CAPTURED_SESSIONS_KEY);
+}
+
+function pruneCapturedSession(session) {
+  writeCapturedSessions(readCapturedSessions().filter((s) => s.session !== session));
+}
+
 function captureCredentials() {
   const headers = lowerCaseHeaders($request.headers);
   const cookie = headers["cookie"] || "";
   const m = /JSESSIONID=([^;]+)/.exec(cookie);
   const csrf = headers["csrf-token"];
-  let changed = false;
-  if (m && m[1] !== $persistentStore.read(CAPTURED_SESSION_KEY)) {
-    $persistentStore.write(m[1], CAPTURED_SESSION_KEY);
-    changed = true;
+  if (!m || !csrf) {
+    $done({});
+    return;
   }
-  if (csrf && csrf !== $persistentStore.read(CAPTURED_CSRF_KEY)) {
-    $persistentStore.write(csrf, CAPTURED_CSRF_KEY);
-    changed = true;
-  }
-  if (changed) {
-    $notification.post("深i工抢兑", "已自动抓取登录凭据", "打开小程序商城页时自动捕获，别忘了在 BoxJs 里填手机号 szgh_phone");
+  const session = m[1];
+  const sessions = readCapturedSessions();
+  const existing = sessions.find((s) => s.session === session);
+  if (existing) {
+    if (existing.csrf !== csrf) {
+      existing.csrf = csrf;
+      writeCapturedSessions(sessions);
+    }
+  } else {
+    sessions.push({ session, csrf });
+    while (sessions.length > MAX_CAPTURED_SESSIONS) sessions.shift();
+    writeCapturedSessions(sessions);
+    $notification.post("深i工抢兑", "已自动抓取新账号", `当前共 ${sessions.length} 个自动抓取账号，别忘了在 BoxJs 里填手机号 szgh_phone`);
   }
   $done({});
 }
 
-// 自动抓取的主账号（session/csrf 来自流量抓取，phone 来自 BoxJs）+ BoxJs 里手动追加的账号。
-function buildAccounts() {
-  const accounts = [];
-  const session = $persistentStore.read(CAPTURED_SESSION_KEY);
-  const csrf = $persistentStore.read(CAPTURED_CSRF_KEY);
-  const phone = $persistentStore.read("szgh_phone") || "";
-  if (session && csrf) accounts.push({ session, csrf, phone, remark: "本机自动抓取" });
+// 自动抓取的账号（同一个 phone 应用到全部，最多同时保留 MAX_CAPTURED_SESSIONS 个）+ BoxJs 手动追加的账号。
+function buildAccounts(phone, capturedSessions) {
+  const accounts = capturedSessions.map((s, i) => ({
+    session: s.session,
+    csrf: s.csrf,
+    phone,
+    remark: capturedSessions.length > 1 ? `本机自动抓取${i + 1}` : "本机自动抓取",
+    _captured: true,
+  }));
   const extraRaw = $persistentStore.read("szgh_redeem_extra") || "";
   for (const acc of parseRedeemAccounts(extraRaw)) {
     if (!accounts.some((a) => a.session === acc.session)) accounts.push(acc);
@@ -499,24 +510,34 @@ function buildAccounts() {
   return accounts;
 }
 
-// ---------- 入口：同一个脚本被两个 [Script] 条目复用 ----------
-// http-request 触发（$request 存在）时只做凭证抓取；cron 触发时跑抢兑主流程。
-
+// 同一个脚本被两个 [Script] 条目复用：http-request 触发时只抓凭证，cron 触发时跑主流程。
 async function runMain() {
   const target = ($persistentStore.read("szgh_target") || "").trim();
-  const accounts = buildAccounts();
+  const phone = ($persistentStore.read("szgh_phone") || "").trim();
+  const capturedSessions = readCapturedSessions();
+  const accounts = buildAccounts(phone, capturedSessions);
   if (!accounts.length) {
     console.log("未捕获到登录凭据，也未在 BoxJs 里配置 szgh_redeem_extra：请先正常打开一次深i工小程序并进入商城页面");
     $done();
     return;
   }
-  const probe = accounts[0];
-  const pointsResp = await getJson(probe, "/snapped/getPoints?deptId=" + DEPT_ID);
-  if (pointsResp.code !== 200) {
-    console.log(`[1][${probe.remark}] 商城登录失效：${pointsResp.msg || pointsResp.message}`);
+
+  let probe = null;
+  for (const account of accounts) {
+    const pointsResp = await getJson(account, "/snapped/getPoints?deptId=" + DEPT_ID);
+    if (pointsResp.code === 200) {
+      probe = account;
+      break;
+    }
+    console.log(`[${account.remark}] 商城登录失效：${pointsResp.msg || pointsResp.message}`);
+    if (account._captured) pruneCapturedSession(account.session);
+  }
+  if (!probe) {
+    console.log("所有账号登录都已失效，请重新打开一次深i工小程序");
     $done();
     return;
   }
+
   const goodsList = await fetchAllGoods(probe);
   if (!goodsList.length) {
     console.log("未取到 0 元专区商品，请稍后重试");
@@ -542,8 +563,10 @@ async function runMain() {
     console.log(line);
     logs.push(line);
   };
-  const runs = accounts.map((account, i) => runAccountRedeem(i + 1, account, goods, log));
-  await Promise.all(runs);
+  const results = await Promise.all(accounts.map((account, i) => runAccountRedeem(i + 1, account, goods, log)));
+  accounts.forEach((account, i) => {
+    if (results[i] === "login_invalid" && account._captured) pruneCapturedSession(account.session);
+  });
   $notification.post("深i工抢兑", goods.goodsName, logs.join("\n"));
   $done();
 }

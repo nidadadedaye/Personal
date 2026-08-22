@@ -1,15 +1,5 @@
 /**
- * 深i工（深圳工会小程序）每日积分任务 —— 由 shenigong_daily.py 移植。
- *
- * 配置：在 Surge 模块的「配置」界面填写参数（对应 shenigong-daily.sgmodule 的 #!arguments）：
- *   szgh_token（必填）：登录 token，来源为小程序抓包请求头 token 字段。
- *                       多账号用 & 或换行分隔，格式 token@备注；备注不要含英文逗号。
- *   szgh_card （选填，仅"阵地打卡"需要）：会员卡号，格式 备注:卡号，多个用 & 分隔；
- *                       备注需与 szgh_token 的 @备注 完全一致。
- *
- * apiId 由内置 AES-128-CBC（对齐 shenigong_daily.py 的手写实现）现算，key=iv="1234567812345678"。
- * UA 选择用简单字符串哈希代替原脚本的 MD5（Surge JS 无内置哈希 API），
- * 只用于稳定选取同一账号的 UA，不影响任务正确性。
+ * 深i工（深圳工会小程序）每日积分任务。token 自动抓取，配置见 boxjs.json。
  */
 
 const BASE = "https://lsapp.szzgh.org:99/api";
@@ -63,7 +53,7 @@ const UA_POOL = [
     "(KHTML, like Gecko) Mobile/15E148 MicroMessenger/8.0.49(0x18003123) NetType/WIFI",
 ];
 
-// ---------- AES-128-CBC（逐行对齐 shenigong_daily.py 的手写实现，仅加密方向，解密未用到不移植）----------
+// ---------- AES-128-CBC（仅加密方向）----------
 
 const AES_SBOX = hexToBytes(
   "637c777bf26b6fc53001672bfed7ab76ca82c97dfa5947f0add4a2af9ca472c0" +
@@ -574,7 +564,7 @@ async function runAccount(token, tag, cfg) {
   return out.join("\n");
 }
 
-// ---------- 手动配置：配合 BoxJs 直接读写 $persistentStore，见仓库根目录 boxjs.json ----------
+// ---------- 手动配置（配合 BoxJs，见 boxjs.json）----------
 
 function parseAccounts(raw) {
   const accounts = [];
@@ -612,11 +602,10 @@ function parseCards(raw) {
   return cards;
 }
 
-// ---------- 凭证自动抓取：type=http-request 命中 lsapp.szzgh.org 的请求时触发 ----------
-// 正常打开一次深i工小程序（发出任意 API 请求）即可自动抓到 token 并持久化，token 过期后
-// 下次打开小程序也会自动刷新，不需要手动抓包/填参数。
+// ---------- 凭证自动抓取 ----------
 
-const CAPTURED_TOKEN_KEY = "szgh_token_captured";
+const CAPTURED_TOKENS_KEY = "szgh_token_captured";
+const MAX_CAPTURED_TOKENS = 3;
 
 function lowerCaseHeaders(headers) {
   const out = {};
@@ -624,21 +613,41 @@ function lowerCaseHeaders(headers) {
   return out;
 }
 
+function readCapturedTokens() {
+  try {
+    const list = JSON.parse($persistentStore.read(CAPTURED_TOKENS_KEY) || "[]");
+    return Array.isArray(list) ? list : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function writeCapturedTokens(tokens) {
+  $persistentStore.write(JSON.stringify(tokens), CAPTURED_TOKENS_KEY);
+}
+
 function captureToken() {
-  const headers = lowerCaseHeaders($request.headers);
-  const token = headers["token"];
-  if (token && token !== $persistentStore.read(CAPTURED_TOKEN_KEY)) {
-    $persistentStore.write(token, CAPTURED_TOKEN_KEY);
-    $notification.post("深i工每日任务", "已自动抓取 token", "打开小程序时自动捕获，稍后可手动跑一次每日任务验证");
+  const token = lowerCaseHeaders($request.headers)["token"];
+  if (!token) {
+    $done({});
+    return;
+  }
+  const tokens = readCapturedTokens();
+  if (!tokens.includes(token)) {
+    tokens.push(token);
+    while (tokens.length > MAX_CAPTURED_TOKENS) tokens.shift();
+    writeCapturedTokens(tokens);
+    $notification.post("深i工每日任务", "已自动抓取新账号", `当前共 ${tokens.length} 个自动抓取账号`);
   }
   $done({});
 }
 
-// 自动抓取的账号 + BoxJs 里手动追加的账号（用于抓不到的其他家庭成员账号），按 token 去重。
-function buildAccounts() {
-  const accounts = [];
-  const captured = $persistentStore.read(CAPTURED_TOKEN_KEY);
-  if (captured) accounts.push([captured, "本机自动抓取"]);
+// 自动抓取的账号（最多同时保留 MAX_CAPTURED_TOKENS 个，跑失败的会被清掉）+ BoxJs 里手动追加的账号。
+function buildAccounts(capturedTokens) {
+  const accounts = capturedTokens.map((token, i) => [
+    token,
+    capturedTokens.length > 1 ? `本机自动抓取${i + 1}` : "本机自动抓取",
+  ]);
   const extraRaw = $persistentStore.read("szgh_token_extra") || "";
   for (const acc of parseAccounts(extraRaw)) {
     if (!accounts.some((a) => a[0] === acc[0])) accounts.push(acc);
@@ -647,7 +656,8 @@ function buildAccounts() {
 }
 
 async function runMain() {
-  const accounts = buildAccounts();
+  const capturedTokens = readCapturedTokens();
+  const accounts = buildAccounts(capturedTokens);
   if (!accounts.length) {
     console.log("未捕获到 token，也未在 BoxJs 里配置 szgh_token_extra：请先正常打开一次深i工小程序，或在 BoxJs 里手动填账号");
     $done();
@@ -661,15 +671,16 @@ async function runMain() {
     const rep = await runAccount(account[0], account[1], cfg);
     console.log(rep);
     reports.push(rep);
+    if (rep.includes("需重抓") && capturedTokens.includes(account[0])) {
+      writeCapturedTokens(readCapturedTokens().filter((t) => t !== account[0]));
+    }
     await cooldown();
   }
   $notification.post("深i工每日任务", "", reports.join("\n\n"));
   $done();
 }
 
-// ---------- 入口：同一个脚本被两个 [Script] 条目复用 ----------
-// http-request 触发（$request 存在）时只做凭证抓取；cron 触发时跑每日任务主流程。
-
+// 同一个脚本被两个 [Script] 条目复用：http-request 触发时只抓凭证，cron 触发时跑主流程。
 (async () => {
   if (typeof $request !== "undefined") {
     captureToken();
