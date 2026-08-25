@@ -12,6 +12,7 @@
 | --- | --- | --- |
 | [shengong-daily.sgmodule](modules/shengong-daily.sgmodule) | 深i工（深圳工会小程序）每日积分任务，打开一次小程序自动抓 token | 自动抓凭据 + BoxJs 补充 |
 | [shengong-redeem.sgmodule](modules/shengong-redeem.sgmodule) | 深i工 0 元专区抢兑，定点并发下单，登录凭据自动抓，手机号/SKU 走 BoxJs | 自动抓凭据 + BoxJs 补充 |
+| [niuniu.sgmodule](modules/niuniu.sgmodule) | 牛牛短剧小程序日常任务（签到/看广告/点赞/收藏/资料），打开一次小程序自动抓 token | 自动抓凭据 + BoxJs 补充 |
 
 ## 目录结构
 

@@ -1,6 +1,6 @@
 {
-  "id": "personal.shengong",
-  "name": "深i工 脚本设置",
+  "id": "personal.scripts",
+  "name": "Personal 脚本设置",
   "author": "@nidadadedaye",
   "repo": "https://github.com/nidadadedaye/Personal",
   "apps": [
@@ -61,6 +61,23 @@
           "rows": 3,
           "desc": "格式：JSESSIONID#csrf-token#手机号@备注，多个用 & 或换行分隔",
           "placeholder": "JSESSIONIDxxx#csrfxxx#13900139000@老婆"
+        }
+      ]
+    },
+    {
+      "id": "niuniu",
+      "name": "牛牛短剧",
+      "keys": ["nn_token_extra"],
+      "settings": [
+        {
+          "id": "nn_token_extra",
+          "name": "额外账号 token",
+          "val": "",
+          "type": "textarea",
+          "autoGrow": true,
+          "rows": 3,
+          "desc": "格式：token@备注，多个用 & 或换行分隔",
+          "placeholder": "abcdef0123456789@老婆"
         }
       ]
     }

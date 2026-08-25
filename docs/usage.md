@@ -24,8 +24,8 @@ https://raw.githubusercontent.com/nidadadedaye/Personal/main/boxjs.json
 订阅后 BoxJs 面板会出现对应模块的表单，填的值直接写进 Surge 的 `$persistentStore`，脚本下次运行就能
 读到；同样只存在你本机，不会进本仓库。
 
-两个模块都用 `[MITM]` + `type=http-request` 做自动抓取，前提是 Surge 已经安装好 MITM 证书并整体启用了
-MITM 功能（Surge 首次配置时的标准步骤，不是这两个模块特有的）。
+所有模块都用 `[MITM]` + `type=http-request` 做自动抓取，前提是 Surge 已经安装好 MITM 证书并整体启用了
+MITM 功能（Surge 首次配置时的标准步骤，不是这几个模块特有的）。
 
 ## 深i工·每日任务
 
@@ -45,6 +45,12 @@ MITM 功能（Surge 首次配置时的标准步骤，不是这两个模块特有
 3. 把模块里的 `cronexp` 改成实际开抢时间前一分钟左右（比如 10:00 开抢改成 `"55 9 * * *"`），保存启用
 
 `szgh_redeem_extra` 同样只在要追加抓不到的其他账号时才需要填。
+
+## 牛牛短剧
+
+启用模块后正常打开一次牛牛短剧小程序（发出任意请求即可），脚本自动抓 token 并存起来，之后按
+`cronexp`（默认每天 8/12/18/21 点，覆盖饭点时段的"饭补"任务）自动跑。`nn_token_extra` 只有想加自动
+抓不到的其他账号时才需要在 BoxJs 里填。
 
 ## 新增模块时的约定
 
