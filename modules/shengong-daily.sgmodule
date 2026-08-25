@@ -1,6 +1,6 @@
 #!name=深i工 每日任务
 #!desc=深圳工会「深i工」小程序每日积分任务，token 自动抓取，配置见 boxjs.json
-#!category=深i工
+#!category=自用模块
 #!author=Personal
 #!homepage=https://github.com/nidadadedaye/Personal
 
