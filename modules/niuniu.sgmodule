@@ -1,6 +1,6 @@
 #!name=牛牛短剧
 #!desc=牛牛短剧小程序日常任务，token 自动抓取，配置见 boxjs.json
-#!category=Utility
+#!category=牛牛短剧
 #!author=Personal
 #!homepage=https://github.com/nidadadedaye/Personal
 

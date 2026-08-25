@@ -1,6 +1,6 @@
 #!name=深i工 0元专区抢兑
 #!desc=深圳工会「深i工」小程序 0 元专区抢兑，登录凭据自动抓取，配置见 boxjs.json
-#!category=Utility
+#!category=深i工
 #!author=Personal
 #!homepage=https://github.com/nidadadedaye/Personal
 # cronexp 需按实际开抢时间改成提前一分钟左右，例如 10:00 开抢配 "55 9 * * *"
