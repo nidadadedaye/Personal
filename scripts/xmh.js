@@ -241,14 +241,6 @@ async function runMain() {
     $persistentStore.write("", "xmh_token_captured");
   }
 
-  // cron 的日志是目前唯一确认能看到的输出通道，所以把存储现状直接打在这里，
-  // 不再依赖 http-response 脚本的 console.log 或 BoxJs 界面。
-  console.log(`---------- 存储诊断（脚本 ${SCRIPT_VERSION}）----------`);
-  console.log(`xmh_accounts_captured = ${$persistentStore.read(CAPTURED_ACCOUNTS_KEY)}`);
-  console.log(`xmh_capture_diag      = ${$persistentStore.read("xmh_capture_diag")}`);
-  console.log(`xmh_token_extra       = ${$persistentStore.read("xmh_token_extra")}`);
-  console.log("------------------------------");
-
   const accounts = buildAccounts();
   if (!accounts.length) {
     console.log("未捕获到账号，也未在 BoxJs 里配置 xmh_token_extra：请先正常打开一次星妈会小程序");

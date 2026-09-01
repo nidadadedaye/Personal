@@ -6,8 +6,8 @@
 # cronexp 需按实际开抢时间改成提前一分钟左右，例如 10:00 开抢配 "55 9 * * *"
 
 [Script]
-shengong-redeem-cron = type=cron,cronexp="55 9 * * *",timeout=400,wake-system=1,script-update-interval=1,script-path=https://raw.githubusercontent.com/nidadadedaye/Personal/main/scripts/shengong_redeem.js
-shengong-redeem-capture = type=http-request,pattern=^https?:\/\/miniapp-gig\.szzgh\.org\/,requires-body=false,script-update-interval=1,script-path=https://raw.githubusercontent.com/nidadadedaye/Personal/main/scripts/shengong_redeem.js
+shengong-redeem-cron = type=cron,cronexp="55 9 * * *",timeout=400,wake-system=1,script-update-interval=3600,script-path=https://raw.githubusercontent.com/nidadadedaye/Personal/main/scripts/shengong_redeem.js
+shengong-redeem-capture = type=http-request,pattern=^https?:\/\/miniapp-gig\.szzgh\.org\/,requires-body=false,script-update-interval=3600,script-path=https://raw.githubusercontent.com/nidadadedaye/Personal/main/scripts/shengong_redeem.js
 
 [MITM]
 hostname = %APPEND% miniapp-gig.szzgh.org
