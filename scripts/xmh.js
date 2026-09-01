@@ -146,16 +146,20 @@ function writeCapturedAccounts(list) {
 
 function captureAccount() {
   const token = lowerCaseHeaders($request.headers)["authorization"];
+  console.log(`[星妈会抓取] 命中，token${token ? "存在" : "不存在"}，response.body 类型=${typeof $response.body}`);
   let body;
   try {
     body = JSON.parse($response.body);
   } catch (e) {
+    console.log("[星妈会抓取] 解析 response.body 失败：" + e);
     $done({});
     return;
   }
   const data = body && body.data;
   const memberId = data && data.memberId;
+  console.log(`[星妈会抓取] memberId=${memberId}`);
   if (!token || !memberId) {
+    console.log("[星妈会抓取] token 或 memberId 缺失，跳过");
     $done({});
     return;
   }
