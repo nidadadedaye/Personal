@@ -7,7 +7,7 @@
     {
       "id": "szgh_daily",
       "name": "深i工 每日任务",
-      "keys": ["szgh_card", "szgh_token_extra"],
+      "keys": ["szgh_card", "szgh_token_extra", "szgh_token_captured"],
       "settings": [
         {
           "id": "szgh_card",
@@ -28,13 +28,22 @@
           "rows": 3,
           "desc": "格式：token@备注，多个用 & 或换行分隔",
           "placeholder": "abcdef0123456789@老婆"
+        },
+        {
+          "id": "szgh_token_captured",
+          "name": "自动抓取数据（只读参考，出问题可清空）",
+          "val": "",
+          "type": "textarea",
+          "autoGrow": true,
+          "rows": 2,
+          "desc": "JSON 数组，脚本自动写入，不用手动填；清空后下次打开小程序会重新抓"
         }
       ]
     },
     {
       "id": "szgh_redeem",
       "name": "深i工 0元专区抢兑",
-      "keys": ["szgh_phone", "szgh_target", "szgh_redeem_extra"],
+      "keys": ["szgh_phone", "szgh_target", "szgh_redeem_extra", "szgh_redeem_sessions"],
       "settings": [
         {
           "id": "szgh_phone",
@@ -61,13 +70,22 @@
           "rows": 3,
           "desc": "格式：JSESSIONID#csrf-token#手机号@备注，多个用 & 或换行分隔",
           "placeholder": "JSESSIONIDxxx#csrfxxx#13900139000@老婆"
+        },
+        {
+          "id": "szgh_redeem_sessions",
+          "name": "自动抓取数据（只读参考，出问题可清空）",
+          "val": "",
+          "type": "textarea",
+          "autoGrow": true,
+          "rows": 2,
+          "desc": "JSON 数组，脚本自动写入，不用手动填；清空后下次打开小程序会重新抓"
         }
       ]
     },
     {
       "id": "niuniu",
       "name": "牛牛短剧",
-      "keys": ["nn_token_extra"],
+      "keys": ["nn_token_extra", "nn_token_captured"],
       "settings": [
         {
           "id": "nn_token_extra",
@@ -78,13 +96,22 @@
           "rows": 3,
           "desc": "格式：token@备注，多个用 & 或换行分隔",
           "placeholder": "abcdef0123456789@老婆"
+        },
+        {
+          "id": "nn_token_captured",
+          "name": "自动抓取数据（只读参考，出问题可清空）",
+          "val": "",
+          "type": "textarea",
+          "autoGrow": true,
+          "rows": 2,
+          "desc": "JSON 数组，脚本自动写入，不用手动填；清空后下次打开小程序会重新抓"
         }
       ]
     },
     {
       "id": "feiyi",
       "name": "飞蚁回收",
-      "keys": ["fyhs_extra"],
+      "keys": ["fyhs_extra", "fyhs_accounts_captured"],
       "settings": [
         {
           "id": "fyhs_extra",
@@ -95,13 +122,22 @@
           "rows": 3,
           "desc": "格式：手机号#token@备注，多个用 & 或换行分隔",
           "placeholder": "13800138000#abcdef0123456789@老婆"
+        },
+        {
+          "id": "fyhs_accounts_captured",
+          "name": "自动抓取数据（只读参考，出问题可清空）",
+          "val": "",
+          "type": "textarea",
+          "autoGrow": true,
+          "rows": 2,
+          "desc": "JSON 数组，脚本自动写入，不用手动填；清空后下次登录小程序会重新抓"
         }
       ]
     },
     {
       "id": "xingma",
       "name": "星妈优选",
-      "keys": ["xmyx_extra"],
+      "keys": ["xmyx_extra", "xmyx_accounts_captured"],
       "settings": [
         {
           "id": "xmyx_extra",
@@ -112,13 +148,22 @@
           "rows": 3,
           "desc": "格式：token@备注，多个用 & 或换行分隔",
           "placeholder": "abcdef0123456789@老婆"
+        },
+        {
+          "id": "xmyx_accounts_captured",
+          "name": "自动抓取数据（只读参考，出问题可清空）",
+          "val": "",
+          "type": "textarea",
+          "autoGrow": true,
+          "rows": 2,
+          "desc": "JSON 数组，脚本自动写入，不用手动填；清空后下次打开小程序会重新抓"
         }
       ]
     },
     {
       "id": "xmh",
       "name": "星妈会",
-      "keys": ["xmh_token_extra"],
+      "keys": ["xmh_token_extra", "xmh_accounts_captured"],
       "settings": [
         {
           "id": "xmh_token_extra",
@@ -129,6 +174,15 @@
           "rows": 3,
           "desc": "格式：token@备注，多个用 & 或换行分隔",
           "placeholder": "abcdef0123456789@老婆"
+        },
+        {
+          "id": "xmh_accounts_captured",
+          "name": "自动抓取数据（只读参考，出问题可清空）",
+          "val": "",
+          "type": "textarea",
+          "autoGrow": true,
+          "rows": 2,
+          "desc": "JSON 数组，脚本自动写入，不用手动填；清空后下次打开小程序会重新抓"
         }
       ]
     }

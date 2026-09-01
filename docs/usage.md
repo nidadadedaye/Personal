@@ -22,7 +22,8 @@ https://raw.githubusercontent.com/nidadadedaye/Personal/main/boxjs.json
 ```
 
 订阅后 BoxJs 面板会出现对应模块的表单，填的值直接写进 Surge 的 `$persistentStore`，脚本下次运行就能
-读到；同样只存在你本机，不会进本仓库。
+读到；同样只存在你本机，不会进本仓库。每个模块的表单里也有一个"自动抓取数据"框，显示脚本自动抓到的
+内容，出问题时可以直接在这里清空重置，不用等人工处理。
 
 所有模块都用 `[MITM]` + `type=http-request`/`type=http-response` 做自动抓取，前提是 Surge 已经安装好
 MITM 证书并整体启用了 MITM 功能（Surge 首次配置时的标准步骤，不是这几个模块特有的）。
