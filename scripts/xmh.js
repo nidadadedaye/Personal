@@ -122,7 +122,6 @@ async function runAccount(account) {
 // ---------- 凭证自动抓取：type=http-request 命中 momclub.feihe.com 的请求时触发 ----------
 
 const CAPTURED_TOKENS_KEY = "xmh_token_captured";
-const MAX_CAPTURED_TOKENS = 3;
 
 function lowerCaseHeaders(headers) {
   const out = {};
@@ -130,31 +129,25 @@ function lowerCaseHeaders(headers) {
   return out;
 }
 
-function readCapturedTokens() {
-  try {
-    const list = JSON.parse($persistentStore.read(CAPTURED_TOKENS_KEY) || "[]");
-    return Array.isArray(list) ? list : [];
-  } catch (e) {
-    return [];
-  }
+function readCapturedToken() {
+  return $persistentStore.read(CAPTURED_TOKENS_KEY) || "";
 }
 
-function writeCapturedTokens(tokens) {
-  $persistentStore.write(JSON.stringify(tokens), CAPTURED_TOKENS_KEY);
+function writeCapturedToken(token) {
+  $persistentStore.write(token, CAPTURED_TOKENS_KEY);
 }
 
+// 这个 App 的 Authorization 不是长期稳定的会话 token（同一账号登录也可能换新），
+// 所以只保留"最新一个"，不做多账号数组——避免把同一账号的新旧 token 误判成两个账号。
 function captureToken() {
   const token = lowerCaseHeaders($request.headers)["authorization"];
   if (!token) {
     $done({});
     return;
   }
-  const tokens = readCapturedTokens();
-  if (!tokens.includes(token)) {
-    tokens.push(token);
-    while (tokens.length > MAX_CAPTURED_TOKENS) tokens.shift();
-    writeCapturedTokens(tokens);
-    $notification.post("星妈会", "已自动抓取新账号", `当前共 ${tokens.length} 个自动抓取账号`);
+  if (token !== readCapturedToken()) {
+    writeCapturedToken(token);
+    $notification.post("星妈会", "已自动抓取/更新账号", "");
   }
   $done({});
 }
@@ -179,12 +172,10 @@ function parseExtraAccounts(raw) {
   return accounts;
 }
 
-// 自动抓取的账号（最多同时保留 MAX_CAPTURED_TOKENS 个，跑失败的会被清掉）+ BoxJs 里手动追加的账号。
-function buildAccounts(capturedTokens) {
-  const accounts = capturedTokens.map((token, i) => ({
-    token,
-    remark: capturedTokens.length > 1 ? `本机自动抓取${i + 1}` : "本机自动抓取",
-  }));
+// 自动抓取的账号（只有一个）+ BoxJs 里手动追加的账号（真正的其他家庭成员账号）。
+function buildAccounts(capturedToken) {
+  const accounts = [];
+  if (capturedToken) accounts.push({ token: capturedToken, remark: "本机自动抓取" });
   const extraRaw = $persistentStore.read("xmh_token_extra") || "";
   for (const acc of parseExtraAccounts(extraRaw)) {
     if (!accounts.some((a) => a.token === acc.token)) accounts.push(acc);
@@ -193,8 +184,8 @@ function buildAccounts(capturedTokens) {
 }
 
 async function runMain() {
-  const capturedTokens = readCapturedTokens();
-  const accounts = buildAccounts(capturedTokens);
+  const capturedToken = readCapturedToken();
+  const accounts = buildAccounts(capturedToken);
   if (!accounts.length) {
     console.log("未捕获到账号，也未在 BoxJs 里配置 xmh_token_extra：请先正常打开一次星妈会小程序");
     $done();
@@ -207,8 +198,8 @@ async function runMain() {
     const report = await runAccount(account);
     console.log(report);
     reports.push(report);
-    if (report.includes("登录已失效") && capturedTokens.includes(account.token)) {
-      writeCapturedTokens(readCapturedTokens().filter((t) => t !== account.token));
+    if (report.includes("登录已失效") && account.token === capturedToken) {
+      writeCapturedToken("");
     }
     if (i < accounts.length - 1) await sleep(2000 + Math.random() * 3000);
   }
