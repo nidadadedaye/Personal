@@ -5,8 +5,8 @@
 #!homepage=https://github.com/nidadadedaye/Personal
 
 [Script]
-feiyi-cron = type=cron,cronexp="45 6,7 * * *",timeout=300,wake-system=1,script-path=https://raw.githubusercontent.com/nidadadedaye/Personal/main/scripts/feiyi.js
-feiyi-capture = type=http-response,pattern=^https:\/\/openapp\.fmy90\.com\/auth\/wx\/login,requires-body=true,script-path=https://raw.githubusercontent.com/nidadadedaye/Personal/main/scripts/feiyi.js
+feiyi-cron = type=cron,cronexp="45 6,7 * * *",timeout=300,wake-system=1,script-update-interval=0,script-path=https://raw.githubusercontent.com/nidadadedaye/Personal/main/scripts/feiyi.js
+feiyi-capture = type=http-response,pattern=^https:\/\/openapp\.fmy90\.com\/auth\/wx\/login,requires-body=true,script-update-interval=0,script-path=https://raw.githubusercontent.com/nidadadedaye/Personal/main/scripts/feiyi.js
 
 [MITM]
 hostname = %APPEND% openapp.fmy90.com
