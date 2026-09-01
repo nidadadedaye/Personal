@@ -2,6 +2,9 @@
  * 星妈会小程序（momclub.feihe.com）签到 + 任务列表逐项完成。登录凭据自动抓取，配置见 boxjs.json。
  */
 
+// 版本标记：出现在通知标题和 cron 日志里，用来确认设备上实际跑的是哪一版脚本
+const SCRIPT_VERSION = "v3";
+
 const BASE = "https://momclub.feihe.com";
 const UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 MicroMessenger/8.0.76(0x18004c2e) NetType/WIFI Language/zh_CN";
 const REFERER = "https://servicewechat.com/wxc83b55d61c7fc51d/164/page-frame.html";
@@ -187,12 +190,12 @@ function captureAccount() {
   if (idx === -1) {
     accounts.push({ memberId, nickname, token });
     writeCapturedAccounts(accounts);
-    $notification.post("星妈会", "🎉新增账号", nickname || memberId);
+    $notification.post(`星妈会 ${SCRIPT_VERSION}`, "🎉新增账号", nickname || memberId);
   } else if (accounts[idx].token !== token) {
     accounts[idx].token = token;
     accounts[idx].nickname = nickname;
     writeCapturedAccounts(accounts);
-    $notification.post("星妈会", "已更新登录凭据", nickname || memberId);
+    $notification.post(`星妈会 ${SCRIPT_VERSION}`, "已更新登录凭据", nickname || memberId);
   }
   $done({});
 }
@@ -240,7 +243,7 @@ async function runMain() {
 
   // cron 的日志是目前唯一确认能看到的输出通道，所以把存储现状直接打在这里，
   // 不再依赖 http-response 脚本的 console.log 或 BoxJs 界面。
-  console.log("---------- 存储诊断 ----------");
+  console.log(`---------- 存储诊断（脚本 ${SCRIPT_VERSION}）----------`);
   console.log(`xmh_accounts_captured = ${$persistentStore.read(CAPTURED_ACCOUNTS_KEY)}`);
   console.log(`xmh_capture_diag      = ${$persistentStore.read("xmh_capture_diag")}`);
   console.log(`xmh_token_extra       = ${$persistentStore.read("xmh_token_extra")}`);
@@ -264,7 +267,7 @@ async function runMain() {
     }
     if (i < accounts.length - 1) await sleep(2000 + Math.random() * 3000);
   }
-  $notification.post("星妈会", "", reports.join("\n\n"));
+  $notification.post(`星妈会 ${SCRIPT_VERSION}`, "", reports.join("\n\n"));
   $done();
 }
 
