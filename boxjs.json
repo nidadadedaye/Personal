@@ -31,12 +31,12 @@
         },
         {
           "id": "szgh_token_captured",
-          "name": "自动抓取数据（只读参考，出问题可清空）",
+          "name": "自动抓取数据",
           "val": "",
           "type": "textarea",
           "autoGrow": true,
           "rows": 2,
-          "desc": "JSON 数组，脚本自动写入，不用手动填；清空后下次打开小程序会重新抓"
+          "desc": "仅供查看，请勿手动修改；如需清空重置，删除内容后保存即可"
         }
       ]
     },
@@ -73,12 +73,12 @@
         },
         {
           "id": "szgh_redeem_sessions",
-          "name": "自动抓取数据（只读参考，出问题可清空）",
+          "name": "自动抓取数据",
           "val": "",
           "type": "textarea",
           "autoGrow": true,
           "rows": 2,
-          "desc": "JSON 数组，脚本自动写入，不用手动填；清空后下次打开小程序会重新抓"
+          "desc": "仅供查看，请勿手动修改；如需清空重置，删除内容后保存即可"
         }
       ]
     },
@@ -99,12 +99,12 @@
         },
         {
           "id": "nn_token_captured",
-          "name": "自动抓取数据（只读参考，出问题可清空）",
+          "name": "自动抓取数据",
           "val": "",
           "type": "textarea",
           "autoGrow": true,
           "rows": 2,
-          "desc": "JSON 数组，脚本自动写入，不用手动填；清空后下次打开小程序会重新抓"
+          "desc": "仅供查看，请勿手动修改；如需清空重置，删除内容后保存即可"
         }
       ]
     },
@@ -125,12 +125,12 @@
         },
         {
           "id": "fyhs_accounts_captured",
-          "name": "自动抓取数据（只读参考，出问题可清空）",
+          "name": "自动抓取数据",
           "val": "",
           "type": "textarea",
           "autoGrow": true,
           "rows": 2,
-          "desc": "JSON 数组，脚本自动写入，不用手动填；清空后下次登录小程序会重新抓"
+          "desc": "仅供查看，请勿手动修改；如需清空重置，删除内容后保存即可"
         }
       ]
     },
@@ -151,12 +151,12 @@
         },
         {
           "id": "xmyx_accounts_captured",
-          "name": "自动抓取数据（只读参考，出问题可清空）",
+          "name": "自动抓取数据",
           "val": "",
           "type": "textarea",
           "autoGrow": true,
           "rows": 2,
-          "desc": "JSON 数组，脚本自动写入，不用手动填；清空后下次打开小程序会重新抓"
+          "desc": "仅供查看，请勿手动修改；如需清空重置，删除内容后保存即可"
         }
       ]
     },
@@ -177,12 +177,12 @@
         },
         {
           "id": "xmh_accounts_captured",
-          "name": "自动抓取数据（只读参考，出问题可清空）",
+          "name": "自动抓取数据",
           "val": "",
           "type": "textarea",
           "autoGrow": true,
           "rows": 2,
-          "desc": "JSON 数组，脚本自动写入，不用手动填；清空后下次打开小程序会重新抓"
+          "desc": "仅供查看，请勿手动修改；如需清空重置，删除内容后保存即可"
         }
       ]
     }
