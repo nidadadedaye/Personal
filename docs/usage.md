@@ -24,8 +24,8 @@ https://raw.githubusercontent.com/nidadadedaye/Personal/main/boxjs.json
 订阅后 BoxJs 面板会出现对应模块的表单，填的值直接写进 Surge 的 `$persistentStore`，脚本下次运行就能
 读到；同样只存在你本机，不会进本仓库。
 
-所有模块都用 `[MITM]` + `type=http-request` 做自动抓取，前提是 Surge 已经安装好 MITM 证书并整体启用了
-MITM 功能（Surge 首次配置时的标准步骤，不是这几个模块特有的）。
+所有模块都用 `[MITM]` + `type=http-request`/`type=http-response` 做自动抓取，前提是 Surge 已经安装好
+MITM 证书并整体启用了 MITM 功能（Surge 首次配置时的标准步骤，不是这几个模块特有的）。
 
 ## 深i工·每日任务
 
@@ -52,15 +52,22 @@ MITM 功能（Surge 首次配置时的标准步骤，不是这几个模块特有
 `cronexp`（默认每天 8/12/18/21 点，覆盖饭点时段的"饭补"任务）自动跑。`nn_token_extra` 只有想加自动
 抓不到的其他账号时才需要在 BoxJs 里填。
 
+## 飞蚁回收
+
+启用模块后正常登录一次飞蚁回收小程序（触发一次 `/auth/wx/login`），脚本从登录响应里自动抓手机号和
+token 并存起来，之后按 `cronexp`（默认每天 6:45、7:45）自动跑签到、步数兑换（最多 3 次）、打卡、投注。
+`fyhs_extra` 只有想加自动抓不到的其他账号（格式 手机号#token@备注）时才需要在 BoxJs 里填。
+
 ## 新增模块时的约定
 
 - 元信息头 `#!key=value` 两边不能有空格（`#!name = x` 会导致 Surge 解析不出模块名，显示为空白）。
 - 脚本文件放 `scripts/`，图标放 `icon/`（文件名与模块同名），都用本仓库 raw 链接引用。
-- 涉及账号 token / cookie 等私密凭据的模块，优先用 `[MITM]` + `type=http-request` 从流量里自动抓取、
-  写入 `$persistentStore`（同一个脚本文件被 `type=cron` 和 `type=http-request` 两个 `[Script]` 条目
-  复用，靠 `typeof $request !== "undefined"` 判断走哪条路径，参考 `shengong-daily.sgmodule` /
-  `scripts/shengong_daily.js`）。抓不到的字段配合 [BoxJs](https://docs.boxjs.app/) 提供表单：把对应
-  `$persistentStore` key 加进 `boxjs.json` 的 `apps[].settings[]`，脚本直接 `$persistentStore.read(key)`
-  读取——不用 Surge 自带的 `#!arguments`，那套机制是纯文本替换、不转义，容易和 `.sgmodule` 自身的逗号/
-  `&` 语法冲突。
+- 涉及账号 token / cookie 等私密凭据的模块，优先用 `[MITM]` + `type=http-request`（能从请求头拿到凭据时）
+  或 `type=http-response`（凭据在响应体里时，比如登录接口的返回值）从流量里自动抓取、写入
+  `$persistentStore`（同一个脚本文件被 `type=cron` 和抓取类型两个 `[Script]` 条目复用，靠
+  `typeof $request`/`typeof $response` 是否存在判断走哪条路径，参考 `shengong-daily.sgmodule` /
+  `scripts/shengong_daily.js`，以及走 `http-response` 的 `feiyi.sgmodule` / `scripts/feiyi.js`）。
+  抓不到的字段配合 [BoxJs](https://docs.boxjs.app/) 提供表单：把对应 `$persistentStore` key 加进
+  `boxjs.json` 的 `apps[].settings[]`，脚本直接 `$persistentStore.read(key)` 读取——不用 Surge 自带的
+  `#!arguments`，那套机制是纯文本替换、不转义，容易和 `.sgmodule` 自身的逗号/`&` 语法冲突。
 - 新增模块后，在根目录 README 的「模块列表」表格里补一行。

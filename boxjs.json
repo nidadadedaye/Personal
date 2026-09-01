@@ -80,6 +80,23 @@
           "placeholder": "abcdef0123456789@老婆"
         }
       ]
+    },
+    {
+      "id": "feiyi",
+      "name": "飞蚁回收",
+      "keys": ["fyhs_extra"],
+      "settings": [
+        {
+          "id": "fyhs_extra",
+          "name": "额外账号",
+          "val": "",
+          "type": "textarea",
+          "autoGrow": true,
+          "rows": 3,
+          "desc": "格式：手机号#token@备注，多个用 & 或换行分隔",
+          "placeholder": "13800138000#abcdef0123456789@老婆"
+        }
+      ]
     }
   ]
 }
