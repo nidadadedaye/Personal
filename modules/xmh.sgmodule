@@ -1,0 +1,12 @@
+#!name=星妈会
+#!desc=星妈会小程序签到 + 任务，登录凭据自动抓取，配置见 boxjs.json
+#!category=自用模块
+#!author=Personal
+#!homepage=https://github.com/nidadadedaye/Personal
+
+[Script]
+xmh-cron = type=cron,cronexp="30 9 * * *",timeout=300,wake-system=1,script-update-interval=0,script-path=https://raw.githubusercontent.com/nidadadedaye/Personal/main/scripts/xmh.js
+xmh-capture = type=http-request,pattern=^https:\/\/momclub\.feihe\.com\/capis\/,requires-body=false,script-update-interval=0,script-path=https://raw.githubusercontent.com/nidadadedaye/Personal/main/scripts/xmh.js
+
+[MITM]
+hostname = %APPEND% momclub.feihe.com

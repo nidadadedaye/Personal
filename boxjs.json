@@ -114,6 +114,23 @@
           "placeholder": "abcdef0123456789@老婆"
         }
       ]
+    },
+    {
+      "id": "xmh",
+      "name": "星妈会",
+      "keys": ["xmh_token_extra"],
+      "settings": [
+        {
+          "id": "xmh_token_extra",
+          "name": "额外账号 token",
+          "val": "",
+          "type": "textarea",
+          "autoGrow": true,
+          "rows": 3,
+          "desc": "格式：token@备注，多个用 & 或换行分隔",
+          "placeholder": "abcdef0123456789@老婆"
+        }
+      ]
     }
   ]
 }
