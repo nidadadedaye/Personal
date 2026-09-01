@@ -129,7 +129,7 @@ function httpRequest(options) {
   });
 }
 
-async function apiGet(account, path, params) {
+async function apiRequest(account, method, path, params, body) {
   let url = BASE + path;
   if (params) {
     const qs = Object.entries(params)
@@ -137,10 +137,11 @@ async function apiGet(account, path, params) {
       .join("&");
     if (qs) url += "?" + qs;
   }
-  const sign = buildSign(undefined);
-  const { error, data } = await httpRequest({
+  // 签名字符串里的 body 段：有 body 用 body，没有就是空字符串（哪怕是 GET+params 也一样）。
+  const sign = buildSign(body);
+  const options = {
     url,
-    method: "GET",
+    method,
     headers: {
       Host: "www.feihevip.com",
       "User-Agent": UA,
@@ -153,7 +154,12 @@ async function apiGet(account, path, params) {
       fhSign: sign.fhSign,
     },
     timeout: 15,
-  });
+  };
+  if (body !== undefined) {
+    options.headers["content-type"] = "application/json";
+    options.body = JSON.stringify(body);
+  }
+  const { error, data } = await httpRequest(options);
   if (error) return { code: -1, msg: String(error) };
   try {
     return JSON.parse(data);
@@ -162,10 +168,18 @@ async function apiGet(account, path, params) {
   }
 }
 
+function apiGet(account, path, params) {
+  return apiRequest(account, "GET", path, params, undefined);
+}
+
+function apiPost(account, path, body) {
+  return apiRequest(account, "POST", path, undefined, body || {});
+}
+
 // ---------- 业务逻辑 ----------
 
 async function getMemberInfo(account) {
-  return apiGet(account, "/starMember/getMemberInfo");
+  return apiPost(account, "/starMember/getMemberInfo", {});
 }
 
 async function getPoints(account) {
@@ -191,7 +205,7 @@ async function runAccount(account) {
   if (alreadySigned) {
     out.push("今日已签到，请勿重复执行");
   } else {
-    const signResp = await apiGet(account, "/member/signin/sign");
+    const signResp = await apiRequest(account, "POST", "/member/signin/sign", {}, undefined);
     if (signResp.code === "200") {
       const points = signResp.data ? signResp.data.awardSendPoints : undefined;
       out.push(`签到完成, 获取积分: ${points}`);
