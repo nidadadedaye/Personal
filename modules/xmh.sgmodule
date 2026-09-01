@@ -6,7 +6,7 @@
 
 [Script]
 xmh-cron = type=cron,cronexp="30 9 * * *",timeout=300,wake-system=1,script-update-interval=0,script-path=https://raw.githubusercontent.com/nidadadedaye/Personal/main/scripts/xmh.js
-xmh-capture = type=http-request,pattern=^https:\/\/momclub\.feihe\.com\/capis\/,requires-body=false,script-update-interval=0,script-path=https://raw.githubusercontent.com/nidadadedaye/Personal/main/scripts/xmh.js
+xmh-capture = type=http-response,pattern=^https:\/\/momclub\.feihe\.com\/capis\/c\/user\/memberInfo,requires-body=true,script-update-interval=0,script-path=https://raw.githubusercontent.com/nidadadedaye/Personal/main/scripts/xmh.js
 
 [MITM]
 hostname = %APPEND% momclub.feihe.com

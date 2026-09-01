@@ -119,9 +119,11 @@ async function runAccount(account) {
   return out.join("\n");
 }
 
-// ---------- 凭证自动抓取：type=http-request 命中 momclub.feihe.com 的请求时触发 ----------
+// ---------- 凭证自动抓取：type=http-response 命中 /capis/c/user/memberInfo 时触发 ----------
+// token 本身不稳定（同账号也可能换新），改用响应体里的 memberId 当账号身份的去重 key，
+// 见到同一个 memberId 就原地更新 token，见到新的 memberId 才算新增账号，这样才能正确支持多账户。
 
-const CAPTURED_TOKENS_KEY = "xmh_token_captured";
+const CAPTURED_ACCOUNTS_KEY = "xmh_accounts_captured";
 
 function lowerCaseHeaders(headers) {
   const out = {};
@@ -129,25 +131,46 @@ function lowerCaseHeaders(headers) {
   return out;
 }
 
-function readCapturedToken() {
-  return $persistentStore.read(CAPTURED_TOKENS_KEY) || "";
+function readCapturedAccounts() {
+  try {
+    const list = JSON.parse($persistentStore.read(CAPTURED_ACCOUNTS_KEY) || "[]");
+    return Array.isArray(list) ? list : [];
+  } catch (e) {
+    return [];
+  }
 }
 
-function writeCapturedToken(token) {
-  $persistentStore.write(token, CAPTURED_TOKENS_KEY);
+function writeCapturedAccounts(list) {
+  $persistentStore.write(JSON.stringify(list), CAPTURED_ACCOUNTS_KEY);
 }
 
-// 这个 App 的 Authorization 不是长期稳定的会话 token（同一账号登录也可能换新），
-// 所以只保留"最新一个"，不做多账号数组——避免把同一账号的新旧 token 误判成两个账号。
-function captureToken() {
+function captureAccount() {
   const token = lowerCaseHeaders($request.headers)["authorization"];
-  if (!token) {
+  let body;
+  try {
+    body = JSON.parse($response.body);
+  } catch (e) {
     $done({});
     return;
   }
-  if (token !== readCapturedToken()) {
-    writeCapturedToken(token);
-    $notification.post("星妈会", "已自动抓取/更新账号", "");
+  const data = body && body.data;
+  const memberId = data && data.memberId;
+  if (!token || !memberId) {
+    $done({});
+    return;
+  }
+  const nickname = data.nickname || data.memberName || "";
+  const accounts = readCapturedAccounts();
+  const idx = accounts.findIndex((a) => a.memberId === memberId);
+  if (idx === -1) {
+    accounts.push({ memberId, nickname, token });
+    writeCapturedAccounts(accounts);
+    $notification.post("星妈会", "🎉新增账号", nickname || memberId);
+  } else if (accounts[idx].token !== token) {
+    accounts[idx].token = token;
+    accounts[idx].nickname = nickname;
+    writeCapturedAccounts(accounts);
+    $notification.post("星妈会", "已更新登录凭据", nickname || memberId);
   }
   $done({});
 }
@@ -172,10 +195,13 @@ function parseExtraAccounts(raw) {
   return accounts;
 }
 
-// 自动抓取的账号（只有一个）+ BoxJs 里手动追加的账号（真正的其他家庭成员账号）。
-function buildAccounts(capturedToken) {
-  const accounts = [];
-  if (capturedToken) accounts.push({ token: capturedToken, remark: "本机自动抓取" });
+// 自动抓取的账号（按 memberId 去重，可以有多个）+ BoxJs 里手动追加的账号。
+function buildAccounts() {
+  const accounts = readCapturedAccounts().map((a) => ({
+    token: a.token,
+    remark: a.nickname || a.memberId,
+    memberId: a.memberId,
+  }));
   const extraRaw = $persistentStore.read("xmh_token_extra") || "";
   for (const acc of parseExtraAccounts(extraRaw)) {
     if (!accounts.some((a) => a.token === acc.token)) accounts.push(acc);
@@ -183,9 +209,9 @@ function buildAccounts(capturedToken) {
   return accounts;
 }
 
+
 async function runMain() {
-  const capturedToken = readCapturedToken();
-  const accounts = buildAccounts(capturedToken);
+  const accounts = buildAccounts();
   if (!accounts.length) {
     console.log("未捕获到账号，也未在 BoxJs 里配置 xmh_token_extra：请先正常打开一次星妈会小程序");
     $done();
@@ -198,8 +224,8 @@ async function runMain() {
     const report = await runAccount(account);
     console.log(report);
     reports.push(report);
-    if (report.includes("登录已失效") && account.token === capturedToken) {
-      writeCapturedToken("");
+    if (report.includes("登录已失效") && account.memberId) {
+      writeCapturedAccounts(readCapturedAccounts().filter((a) => a.memberId !== account.memberId));
     }
     if (i < accounts.length - 1) await sleep(2000 + Math.random() * 3000);
   }
@@ -207,10 +233,10 @@ async function runMain() {
   $done();
 }
 
-// 同一个脚本被两个 [Script] 条目复用：http-request 触发时只抓凭证，cron 触发时跑主流程。
+// 同一个脚本被两个 [Script] 条目复用：http-response 触发时只抓凭证，cron 触发时跑主流程。
 (async () => {
-  if (typeof $request !== "undefined") {
-    captureToken();
+  if (typeof $response !== "undefined") {
+    captureAccount();
   } else {
     await runMain();
   }
