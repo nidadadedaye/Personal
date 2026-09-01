@@ -7,7 +7,11 @@
     {
       "id": "szgh_daily",
       "name": "深i工 每日任务",
-      "keys": ["szgh_card", "szgh_token_extra", "szgh_token_captured"],
+      "keys": [
+        "szgh_card",
+        "szgh_token_extra",
+        "szgh_token_captured"
+      ],
       "settings": [
         {
           "id": "szgh_card",
@@ -43,7 +47,12 @@
     {
       "id": "szgh_redeem",
       "name": "深i工 0元专区抢兑",
-      "keys": ["szgh_phone", "szgh_target", "szgh_redeem_extra", "szgh_redeem_sessions"],
+      "keys": [
+        "szgh_phone",
+        "szgh_target",
+        "szgh_redeem_extra",
+        "szgh_redeem_sessions"
+      ],
       "settings": [
         {
           "id": "szgh_phone",
@@ -85,7 +94,10 @@
     {
       "id": "niuniu",
       "name": "牛牛短剧",
-      "keys": ["nn_token_extra", "nn_token_captured"],
+      "keys": [
+        "nn_token_extra",
+        "nn_token_captured"
+      ],
       "settings": [
         {
           "id": "nn_token_extra",
@@ -111,7 +123,10 @@
     {
       "id": "feiyi",
       "name": "飞蚁回收",
-      "keys": ["fyhs_extra", "fyhs_accounts_captured"],
+      "keys": [
+        "fyhs_extra",
+        "fyhs_accounts_captured"
+      ],
       "settings": [
         {
           "id": "fyhs_extra",
@@ -137,7 +152,10 @@
     {
       "id": "xingma",
       "name": "星妈优选",
-      "keys": ["xmyx_extra", "xmyx_accounts_captured"],
+      "keys": [
+        "xmyx_extra",
+        "xmyx_accounts_captured"
+      ],
       "settings": [
         {
           "id": "xmyx_extra",
@@ -163,7 +181,11 @@
     {
       "id": "xmh",
       "name": "星妈会",
-      "keys": ["xmh_token_extra", "xmh_accounts_captured"],
+      "keys": [
+        "xmh_token_extra",
+        "xmh_accounts_captured",
+        "xmh_capture_diag"
+      ],
       "settings": [
         {
           "id": "xmh_token_extra",
@@ -183,6 +205,15 @@
           "autoGrow": true,
           "rows": 2,
           "desc": "仅供查看，请勿手动修改；如需清空重置，删除内容后保存即可"
+        },
+        {
+          "id": "xmh_capture_diag",
+          "name": "抓取诊断信息",
+          "val": "",
+          "type": "textarea",
+          "autoGrow": true,
+          "rows": 2,
+          "desc": "仅供排查问题查看，脚本自动写入"
         }
       ]
     }

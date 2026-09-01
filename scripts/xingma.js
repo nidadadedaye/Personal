@@ -140,7 +140,6 @@ async function apiRequest(account, method, path, params, body) {
     url,
     method,
     headers: {
-      Host: "www.feihevip.com",
       "User-Agent": UA,
       Referer: REFERER,
       token: account.token,

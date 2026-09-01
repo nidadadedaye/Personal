@@ -14,7 +14,6 @@ function sleep(ms) {
 
 function headersFor(token) {
   return {
-    Host: "momclub.feihe.com",
     cuk: "[object Undefined]",
     "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
     "content-type": "application/json",
@@ -146,23 +145,32 @@ function writeCapturedAccounts(list) {
 
 function captureAccount() {
   const token = lowerCaseHeaders($request.headers)["authorization"];
-  console.log(`[星妈会抓取] 命中，token${token ? "存在" : "不存在"}，response.body 类型=${typeof $response.body}`);
+  // 抓取失败时把中间状态写进一个可在 BoxJs 里查看的诊断 key，不依赖 console.log
+  // （http-response 类型脚本的 console.log 在 Surge 界面上很难找到）。
+  const diag = (stage, extra) => {
+    $persistentStore.write(
+      `[${new Date().toLocaleString()}] ${stage}${extra === undefined ? "" : " | " + extra}`,
+      "xmh_capture_diag"
+    );
+  };
+  const rawBody = $response.body;
+  diag("命中抓取", `token=${token ? "有" : "无"}, body类型=${typeof rawBody}, body长度=${rawBody && rawBody.length}`);
   let body;
   try {
-    body = JSON.parse($response.body);
+    body = typeof rawBody === "string" ? JSON.parse(rawBody) : rawBody;
   } catch (e) {
-    console.log("[星妈会抓取] 解析 response.body 失败：" + e);
+    diag("解析body失败", String(e));
     $done({});
     return;
   }
   const data = body && body.data;
   const memberId = data && data.memberId;
-  console.log(`[星妈会抓取] memberId=${memberId}`);
   if (!token || !memberId) {
-    console.log("[星妈会抓取] token 或 memberId 缺失，跳过");
+    diag("缺字段跳过", `memberId=${memberId}, body前120字=${String(rawBody).slice(0, 120)}`);
     $done({});
     return;
   }
+  diag("抓取成功", `memberId=${memberId}`);
   const nickname = data.nickname || data.memberName || "";
   const accounts = readCapturedAccounts();
   const idx = accounts.findIndex((a) => a.memberId === memberId);
