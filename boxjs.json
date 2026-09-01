@@ -97,6 +97,23 @@
           "placeholder": "13800138000#abcdef0123456789@老婆"
         }
       ]
+    },
+    {
+      "id": "xingma",
+      "name": "星妈优选",
+      "keys": ["xmyx_extra"],
+      "settings": [
+        {
+          "id": "xmyx_extra",
+          "name": "额外账号 token",
+          "val": "",
+          "type": "textarea",
+          "autoGrow": true,
+          "rows": 3,
+          "desc": "格式：token@备注，多个用 & 或换行分隔",
+          "placeholder": "abcdef0123456789@老婆"
+        }
+      ]
     }
   ]
 }

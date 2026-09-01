@@ -1,0 +1,12 @@
+#!name=星妈优选
+#!desc=星妈优选小程序日常任务，登录凭据自动抓取，配置见 boxjs.json
+#!category=自用模块
+#!author=Personal
+#!homepage=https://github.com/nidadadedaye/Personal
+
+[Script]
+xingma-cron = type=cron,cronexp="22 11,19 * * *",timeout=300,wake-system=1,script-path=https://raw.githubusercontent.com/nidadadedaye/Personal/main/scripts/xingma.js
+xingma-capture = type=http-response,pattern=^https:\/\/www\.feihevip\.com\/api\/starMember\/getMemberInfo,requires-body=true,script-path=https://raw.githubusercontent.com/nidadadedaye/Personal/main/scripts/xingma.js
+
+[MITM]
+hostname = %APPEND% www.feihevip.com
