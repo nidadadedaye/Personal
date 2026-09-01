@@ -130,13 +130,25 @@ function lowerCaseHeaders(headers) {
   return out;
 }
 
+// 读的时候就地清理：丢掉没有 memberId 的旧格式条目，同一个 memberId 只保留最后写入的那条。
+// 这样即使存储里已经躺着旧版本留下的重复数据，也不会被当成多个账号重复跑。
 function readCapturedAccounts() {
+  let list;
   try {
-    const list = JSON.parse($persistentStore.read(CAPTURED_ACCOUNTS_KEY) || "[]");
-    return Array.isArray(list) ? list : [];
+    list = JSON.parse($persistentStore.read(CAPTURED_ACCOUNTS_KEY) || "[]");
   } catch (e) {
     return [];
   }
+  if (!Array.isArray(list)) return [];
+  const byMemberId = new Map();
+  for (const item of list) {
+    if (item && item.memberId && item.token) byMemberId.set(item.memberId, item);
+  }
+  const cleaned = Array.from(byMemberId.values());
+  if (cleaned.length !== list.length) {
+    $persistentStore.write(JSON.stringify(cleaned), CAPTURED_ACCOUNTS_KEY);
+  }
+  return cleaned;
 }
 
 function writeCapturedAccounts(list) {
@@ -154,7 +166,6 @@ function captureAccount() {
     );
   };
   const rawBody = $response.body;
-  diag("命中抓取", `token=${token ? "有" : "无"}, body类型=${typeof rawBody}, body长度=${rawBody && rawBody.length}`);
   let body;
   try {
     body = typeof rawBody === "string" ? JSON.parse(rawBody) : rawBody;
@@ -170,7 +181,6 @@ function captureAccount() {
     $done({});
     return;
   }
-  diag("抓取成功", `memberId=${memberId}`);
   const nickname = data.nickname || data.memberName || "";
   const accounts = readCapturedAccounts();
   const idx = accounts.findIndex((a) => a.memberId === memberId);
@@ -223,6 +233,11 @@ function buildAccounts() {
 
 
 async function runMain() {
+  // 早期版本用过 xmh_token_captured 这个 key，现在已经不读了，清掉避免残留数据造成困惑。
+  if ($persistentStore.read("xmh_token_captured")) {
+    $persistentStore.write("", "xmh_token_captured");
+  }
+
   // cron 的日志是目前唯一确认能看到的输出通道，所以把存储现状直接打在这里，
   // 不再依赖 http-response 脚本的 console.log 或 BoxJs 界面。
   console.log("---------- 存储诊断 ----------");
