@@ -142,9 +142,12 @@ async function apiGet(account, path, params) {
     url,
     method: "GET",
     headers: {
+      Host: "www.feihevip.com",
       "User-Agent": UA,
       Referer: REFERER,
       token: account.token,
+      fhAppid: APP_TAG,
+      source: 1,
       fhNonceStr: sign.fhNonceStr,
       fhTimestamp: sign.fhTimestamp,
       fhSign: sign.fhSign,
