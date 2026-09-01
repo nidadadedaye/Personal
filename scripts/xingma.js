@@ -1,8 +1,5 @@
 /**
- * 星妈优选小程序日常任务：签到、任务列表逐项完成，登录凭据自动抓取。
- * 反混淆自第三方脚本，用 Node 沙箱运行原脚本自带的签名函数确认是 MD5
- * （命中 MD5 初始状态幻数 1732584193/4023233417/2562383102/271733878），
- * 逐个接口核对请求形状后重写，未逐字保留原始（受保护的）代码。
+ * 星妈优选小程序日常任务：签到、任务列表逐项完成。登录凭据自动抓取，配置见 boxjs.json。
  */
 
 const BASE = "https://www.feihevip.com/api";
@@ -205,7 +202,7 @@ async function runAccount(account) {
   if (alreadySigned) {
     out.push("今日已签到，请勿重复执行");
   } else {
-    const signResp = await apiRequest(account, "POST", "/member/signin/sign", {}, undefined);
+    const signResp = await apiRequest(account, "POST", "/member/signin/sign", {}, {});
     if (signResp.code === "200") {
       const points = signResp.data ? signResp.data.awardSendPoints : undefined;
       out.push(`签到完成, 获取积分: ${points}`);
